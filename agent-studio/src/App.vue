@@ -9,6 +9,7 @@ import {
   Code2,
   Copy,
   Download,
+  ExternalLink,
   FileText,
   FolderOpen,
   Home,
@@ -19,13 +20,25 @@ import {
   Sparkles,
   User,
 } from 'lucide-vue-next'
+import {
+  launchRoadmap,
+  learningModules,
+  lessons,
+  projectCases,
+  promptTemplates,
+  resourceLinks,
+  saleHighlights,
+  siteConfig,
+} from './data/content'
 
 const activeMenu = ref('path')
 const copiedPrompt = ref(false)
 const toast = ref('')
-const cardKey = ref('AGENT2026-ABC123')
+const cardKey = ref(siteConfig.demoKey)
 const authToken = ref(window.localStorage.getItem('agent-studio-token') || '')
 const isLoggingIn = ref(false)
+const selectedModuleId = ref(learningModules[0]?.id || '')
+const selectedLessonId = ref(lessons[0]?.id || '')
 
 const navItems = [
   { id: 'home', label: '首页', icon: Home },
@@ -36,153 +49,140 @@ const navItems = [
   { id: 'favorites', label: '收藏夹', icon: Box },
 ]
 
+const colorCycle = ['green', 'blue', 'orange', 'yellow']
+const iconCycle = [Rocket, BookOpen, Code2, Sparkles]
+
 const sections = {
   home: {
-    eyebrow: '自学入口',
-    title: '今天继续做出一个小作品',
-    subtitle: '快速找到下一篇教程、下一个项目和可复制资源，保持轻量节奏继续往前做。',
-    action: '继续学习',
+    eyebrow: '首版资料站',
+    title: '先把教程做成可以买、能看、能复制的产品',
+    subtitle: '当前版本把教程、模板、案例和资源先放在页面里，最快验证卡密售卖和内容交付体验。',
+    action: '查看首节',
   },
   path: {
     eyebrow: '学习路径',
-    title: '按顺序走，先做出来再理解',
-    subtitle: '第一版先保留最短路径：入门、基础、实战、发布。每一步都用占位内容，后续替换真实资料。',
-    action: '开始下一节',
+    title: '从第一个小作品走到上线交付',
+    subtitle: '每一节都围绕一个可完成的小产出：看懂目标、照着做、复制模板、整理成自己的作品。',
+    action: '复制本节提示词',
   },
   projects: {
-    eyebrow: '项目实战',
-    title: '从一个小项目开始练手',
-    subtitle: '这里没有提交和评分，你可以按示例拆解、复制素材、改成自己的版本。',
-    action: '查看项目',
+    eyebrow: '实战案例',
+    title: '用小项目撑起真实交付感',
+    subtitle: '案例先用通用场景和公开资料搭骨架，后续替换成你的真实项目素材。',
+    action: '查看案例',
   },
   resources: {
-    eyebrow: '资源库',
-    title: '素材、源码和模板先放在这里',
-    subtitle: '用统一卡片承载 PDF、源码、表格和资料包，后续替换成真实下载地址。',
-    action: '浏览资源',
+    eyebrow: '资料库',
+    title: '资料入口、项目参考和交付材料集中放',
+    subtitle: '外部资料只放入口，站内重点放你整理后的中文讲解和可复制步骤。',
+    action: '打开资源',
   },
   templates: {
     eyebrow: '工具模板',
-    title: '从模板开始，不从空白页开始',
-    subtitle: '这里放提示词、检查清单、项目结构和交付模板。第一版只做静态占位和复制入口。',
+    title: '让用户从可复制模板开始',
+    subtitle: '把常用提示词、检查清单和项目拆解模板做成按钮，降低第一次动手的阻力。',
     action: '复制模板',
   },
   favorites: {
     eyebrow: '收藏夹',
-    title: '把常用内容先收在一个地方',
-    subtitle: '收藏夹只做个人资料整理，方便回到常用教程、模板和案例。',
-    action: '查看收藏',
+    title: '先把常用内容收在一起',
+    subtitle: '第一版先展示推荐内容，正式版再记住每个用户自己收藏了什么。',
+    action: '回到路径',
   },
 }
 
-const pathCards = [
-  {
-    title: '快速入门',
-    desc: '了解界面、复制第一个提示词，跑通最小作品。',
-    icon: Rocket,
-    color: 'green',
-    level: '新手友好',
-    meta: '3 篇占位教程',
-    state: '建议先看',
-  },
-  {
-    title: 'Agent 基础',
-    desc: '用通俗语言理解工具调用、上下文和执行步骤。',
-    icon: Box,
-    color: 'blue',
-    level: '基础概念',
-    meta: '5 篇占位教程',
-    state: '适合第二步',
-  },
-  {
-    title: '项目实战',
-    desc: '用假数据做完整练习，后续替换真实项目案例。',
-    icon: Code2,
-    color: 'orange',
-    level: '动手练习',
-    meta: '4 个占位案例',
-    state: '做中学',
-  },
-  {
-    title: '发布上线',
-    desc: '把作品整理、部署、分享，形成可复用流程。',
-    icon: Sparkles,
-    color: 'yellow',
-    level: '交付流程',
-    meta: '2 份检查清单',
-    state: '最后再看',
-  },
-]
-
-const suggestions = [
-  { text: '先看「Agent 是什么？」这篇入门内容', state: '推荐' },
-  { text: '复制一段提示词，生成一个小工具界面', state: '可复制' },
-  { text: '打开项目实战示例，替换成自己的主题', state: '可跟做' },
-  { text: '下载资源包，整理到本地文件夹', state: '稍后看' },
-]
-
-const resources = [
-  { name: 'Agent 实操设计指南（入门版）', type: 'PDF', size: '1.2 MB', tone: 'red' },
-  { name: '提示词与变量占位模板', type: 'DOC', size: '320 KB', tone: 'blue' },
-  { name: '教程截图规范检查表', type: 'XLS', size: '560 KB', tone: 'green' },
-  { name: '项目源码示例包（占位版）', type: 'ZIP', size: '8.6 MB', tone: 'purple' },
-]
-
-const recentItems = [
-  { title: '课程：Agent 是什么？', meta: '今天 09:15', icon: Play },
-  { title: '阅读：大模型输出结构', meta: '今天 10:02', icon: FileText },
-  { title: '实战：做一个小工具', meta: '今天 11:40', icon: Code2 },
-  { title: '笔记：今日学习结论', meta: '今天 12:10', icon: BookOpen },
-]
-
-const promptCards = [
-  '帮我把这段教程改成小白能跟着做的步骤',
-  '根据这个项目目标，列出 3 个可练习的小作品',
-  '把下面的报错解释成人话，并告诉我下一步点哪里',
-]
-
 const current = computed(() => sections[activeMenu.value])
 const isLoggedIn = computed(() => Boolean(authToken.value))
+const activeModule = computed(
+  () => learningModules.find((module) => module.id === selectedModuleId.value) || learningModules[0],
+)
+const moduleLessons = computed(() =>
+  lessons.filter((lesson) => lesson.moduleId === selectedModuleId.value),
+)
+const selectedLesson = computed(() => {
+  const inModule = moduleLessons.value.find((lesson) => lesson.id === selectedLessonId.value)
+  return inModule || moduleLessons.value[0] || lessons[0]
+})
+const nextLesson = computed(() => lessons[lessons.findIndex((item) => item.id === selectedLesson.value.id) + 1])
 
 const mainCards = computed(() => {
   if (activeMenu.value === 'projects') {
-    return [
-      { ...pathCards[2], title: '网页小工具', meta: '案例占位 01', level: '跟做' },
-      { ...pathCards[0], title: '自动周报助手', meta: '案例占位 02', level: '复制改造' },
-      { ...pathCards[1], title: '资料整理 Agent', meta: '案例占位 03', level: '拆解' },
-      { ...pathCards[3], title: '作品发布页', meta: '案例占位 04', level: '整理发布' },
-    ]
+    return projectCases.slice(0, 4).map((item, index) => ({
+      id: item.id,
+      title: item.title,
+      desc: item.summary,
+      icon: iconCycle[index % iconCycle.length],
+      color: colorCycle[index % colorCycle.length],
+      level: item.deliverable,
+      meta: `${item.steps.length} 个步骤`,
+      state: item.materials.slice(0, 2).join(' / '),
+      type: 'project',
+    }))
   }
 
   if (activeMenu.value === 'resources') {
-    return [
-      { ...pathCards[0], title: '模板包', meta: '12 个占位文件', level: '可下载' },
-      { ...pathCards[1], title: '源码包', meta: '6 个占位项目', level: '资料包' },
-      { ...pathCards[2], title: '截图素材', meta: '18 张占位图', level: '可替换' },
-      { ...pathCards[3], title: '检查清单', meta: '5 份表格', level: '表格' },
-    ]
+    return resourceLinks.slice(0, 4).map((item, index) => ({
+      id: item.id,
+      title: item.title,
+      desc: item.description,
+      icon: index % 2 ? FileText : FolderOpen,
+      color: colorCycle[index % colorCycle.length],
+      level: item.type,
+      meta: item.publisher,
+      state: item.size || '外部链接',
+      type: 'resource',
+    }))
   }
 
   if (activeMenu.value === 'templates') {
-    return [
-      { ...pathCards[0], title: '写代码提示词', meta: '8 条占位模板', level: '复制' },
-      { ...pathCards[1], title: '做设计提示词', meta: '6 条占位模板', level: '占位' },
-      { ...pathCards[2], title: '排错提示词', meta: '9 条占位模板', level: '常用' },
-      { ...pathCards[3], title: '发布提示词', meta: '4 条占位模板', level: '流程' },
-    ]
+    return promptTemplates.slice(0, 4).map((item, index) => ({
+      id: item.id,
+      title: item.title,
+      desc: item.summary,
+      icon: index % 2 ? Copy : Library,
+      color: colorCycle[index % colorCycle.length],
+      level: item.category,
+      meta: item.useFor,
+      state: '可复制',
+      type: 'template',
+    }))
   }
 
   if (activeMenu.value === 'favorites') {
     return [
-      { ...pathCards[0], title: '常看教程', meta: '收藏占位', level: '教程' },
-      { ...pathCards[1], title: '常用提示词', meta: '收藏占位', level: '模板' },
-      { ...pathCards[2], title: '项目参考', meta: '收藏占位', level: '案例' },
-      { ...pathCards[3], title: '交付清单', meta: '收藏占位', level: '清单' },
-    ]
+      selectedLesson.value,
+      promptTemplates[0],
+      projectCases[0],
+      resourceLinks[0],
+    ].filter(Boolean).map((item, index) => ({
+      id: item.id,
+      title: item.title,
+      desc: item.summary || item.description,
+      icon: iconCycle[index % iconCycle.length],
+      color: colorCycle[index % colorCycle.length],
+      level: ['教程', '模板', '案例', '资源'][index],
+      meta: index === 0 ? selectedLesson.value.duration : '推荐入口',
+      state: '常用',
+      type: ['lesson', 'template', 'project', 'resource'][index],
+    }))
   }
 
-  return pathCards
+  return learningModules.map((item, index) => ({
+    id: item.id,
+    title: item.title,
+    desc: item.summary,
+    icon: iconCycle[index % iconCycle.length],
+    color: colorCycle[index % colorCycle.length],
+    level: item.kicker,
+    meta: item.duration,
+    state: item.status,
+    type: 'module',
+  }))
 })
+
+const resourcePreview = computed(() => resourceLinks.slice(0, 4))
+const templatePreview = computed(() => promptTemplates.slice(0, 3))
+const heroHighlights = computed(() => saleHighlights.slice(0, 3))
 
 function showToast(message) {
   toast.value = message
@@ -192,16 +192,66 @@ function showToast(message) {
   }, 1800)
 }
 
-function copyPrompt() {
+function setActiveMenu(id) {
+  activeMenu.value = id
+}
+
+function selectModule(moduleId) {
+  selectedModuleId.value = moduleId
+  selectedLessonId.value = lessons.find((lesson) => lesson.moduleId === moduleId)?.id || selectedLessonId.value
+  activeMenu.value = 'path'
+}
+
+function selectLesson(lesson) {
+  selectedModuleId.value = lesson.moduleId
+  selectedLessonId.value = lesson.id
+  activeMenu.value = 'path'
+}
+
+async function copyText(text, label = '内容') {
   copiedPrompt.value = true
-  showToast('已复制一段占位提示词')
+
+  try {
+    await navigator.clipboard?.writeText(text)
+    showToast(`已复制${label}`)
+  } catch (error) {
+    showToast('浏览器暂不允许自动复制，请手动选中文本')
+  }
+
   window.setTimeout(() => {
     copiedPrompt.value = false
   }, 1500)
 }
 
+function handleCardClick(card) {
+  if (card.type === 'module') {
+    selectModule(card.id)
+    return
+  }
+
+  if (card.type === 'template') {
+    const template = promptTemplates.find((item) => item.id === card.id)
+    copyText(template?.copyText || card.title, '模板')
+    return
+  }
+
+  showToast(`已打开：${card.title}`)
+}
+
 function downloadResource(name) {
-  showToast(`已模拟下载：${name}`)
+  showToast(`已记录资源入口：${name}`)
+}
+
+function resourceTone(type) {
+  const lower = type.toLowerCase()
+  if (lower.includes('导航')) return 'yellow'
+  if (lower.includes('知识') || lower.includes('助手')) return 'blue'
+  if (lower.includes('提问') || lower.includes('发布')) return 'purple'
+  if (lower.includes('云端')) return 'green'
+  if (lower.includes('doc')) return 'blue'
+  if (lower.includes('代码') || lower.includes('github')) return 'purple'
+  if (lower.includes('清单') || lower.includes('guide')) return 'green'
+  return 'red'
 }
 
 function getDeviceId() {
@@ -233,7 +283,7 @@ async function loginWithCardKey() {
     } else {
       await new Promise((resolve) => window.setTimeout(resolve, 360))
       data = {
-        success: cardKey.value.trim().toUpperCase() === 'AGENT2026-ABC123',
+        success: cardKey.value.trim().toUpperCase() === siteConfig.demoKey,
         token: 'local-demo-token',
         message: '本地演示登录成功',
       }
@@ -248,7 +298,7 @@ async function loginWithCardKey() {
     window.localStorage.setItem('agent-studio-token', data.token)
     showToast(data.message || '登录成功')
   } catch (error) {
-    showToast('云函数调用失败，请检查 URL')
+    showToast('云端登录调用失败，请检查地址')
   } finally {
     isLoggingIn.value = false
   }
@@ -264,31 +314,33 @@ function logout() {
 <template>
   <section v-if="!isLoggedIn" class="login-screen">
     <div class="login-shell">
-      <div class="login-brand">
-        <div class="brand-mark">
-          <Sparkles :size="20" />
+      <div>
+        <div class="login-brand">
+          <div class="brand-mark">
+            <Sparkles :size="20" />
+          </div>
+          <div>
+            <strong>{{ siteConfig.brandName }}</strong>
+            <span>{{ siteConfig.subtitle }}</span>
+          </div>
         </div>
-        <div>
-          <strong>Agent Studio</strong>
-          <span>自学资料站</span>
-        </div>
-      </div>
 
-      <div class="login-copy">
-        <span class="eyebrow">卡密登录</span>
-        <h1>输入卡密后，进入完整资料站</h1>
-        <p>第一版先做最简单的访问控制：卡密验证通过后，站内教程、案例、资料和模板暂时全部可看。</p>
+        <div class="login-copy">
+          <span class="eyebrow">卡密登录</span>
+          <h1>{{ siteConfig.loginTitle }}</h1>
+          <p>{{ siteConfig.loginDescription }}</p>
+        </div>
       </div>
 
       <form class="login-card" @submit.prevent="loginWithCardKey">
         <label>
           <span>卡密</span>
-          <input v-model="cardKey" placeholder="AGENT2026-ABC123" autocomplete="one-time-code" />
+          <input v-model="cardKey" :placeholder="siteConfig.demoKey" autocomplete="one-time-code" />
         </label>
         <button type="submit" :disabled="isLoggingIn">
-          {{ isLoggingIn ? '登录中...' : '进入学习工作台' }}
+          {{ isLoggingIn ? '登录中...' : '进入资料站' }}
         </button>
-        <p>本地演示卡密：AGENT2026-ABC123</p>
+        <p>本地演示卡密：{{ siteConfig.demoKey }}</p>
       </form>
     </div>
 
@@ -304,8 +356,8 @@ function logout() {
           <Sparkles :size="19" />
         </div>
         <div>
-          <strong>Agent Studio</strong>
-          <span>自学资料站</span>
+          <strong>{{ siteConfig.brandName }}</strong>
+          <span>{{ siteConfig.subtitle }}</span>
         </div>
       </div>
 
@@ -316,7 +368,7 @@ function logout() {
           class="nav-item"
           :class="{ active: activeMenu === item.id }"
           type="button"
-          @click="activeMenu = item.id"
+          @click="setActiveMenu(item.id)"
         >
           <component :is="item.icon" :size="17" />
           <span>{{ item.label }}</span>
@@ -329,13 +381,13 @@ function logout() {
             <Sparkles :size="16" />
           </div>
           <strong>卡密已登录</strong>
-          <span>第一版暂时开放全部占位内容</span>
+          <span>首版全站通行，教程、案例、资料和模板都可查看。</span>
           <button type="button" @click="logout">退出登录</button>
         </div>
 
         <div class="mini-note">
-          <strong>最近打开</strong>
-          <span>工具模板 / 项目模板</span>
+          <strong>首版售卖</strong>
+          <span>{{ siteConfig.offerLine }}</span>
         </div>
       </div>
     </aside>
@@ -344,18 +396,18 @@ function logout() {
       <header class="topbar">
         <label class="search">
           <Search :size="16" />
-          <input placeholder="搜索课程、项目、资源、提示词..." />
-          <kbd>⌘ K</kbd>
+          <input :placeholder="siteConfig.searchPlaceholder" />
+          <kbd>搜索</kbd>
         </label>
 
         <div class="top-actions">
           <button class="user-chip" type="button">
             <span class="avatar"><User :size="16" /></span>
-            <span>学习者_001</span>
+            <span>{{ siteConfig.userName }}</span>
             <ChevronRight :size="14" />
           </button>
-          <button class="primary-button" type="button" @click="showToast('继续学习：打开占位章节')">
-            继续学习
+          <button class="primary-button" type="button" @click="selectLesson(selectedLesson)">
+            继续阅读
           </button>
         </div>
       </header>
@@ -365,24 +417,33 @@ function logout() {
           <span class="eyebrow">{{ current.eyebrow }}</span>
           <h1>{{ current.title }}</h1>
           <p>{{ current.subtitle }}</p>
+          <div class="hero-pills" aria-label="首版售卖亮点">
+            <span v-for="item in heroHighlights" :key="item.title">{{ item.title }}</span>
+          </div>
         </div>
 
         <div class="continue-card">
-          <div class="location-mark" aria-label="当前停留位置">
+          <div class="location-mark" aria-label="当前推荐章节">
             <BookOpen :size="24" />
           </div>
           <div>
-            <strong>最近停留：入门第 4 节</strong>
-            <p>回到上次看到的位置，继续从一个可完成的小步骤开始。</p>
-            <button type="button" @click="copyPrompt">
+            <strong>{{ selectedLesson.title }}</strong>
+            <p>{{ selectedLesson.outcome }}</p>
+            <button type="button" @click="copyText(selectedLesson.prompt, '本节提示词')">
               {{ copiedPrompt ? '已复制' : current.action }}
             </button>
           </div>
         </div>
       </section>
 
-      <section class="path-grid" aria-label="学习路径卡片">
-        <article v-for="card in mainCards" :key="card.title" class="path-card">
+      <section class="path-grid" aria-label="内容入口卡片">
+        <article
+          v-for="card in mainCards"
+          :key="card.title"
+          class="path-card"
+          :class="{ selected: card.id === selectedModuleId }"
+          @click="handleCardClick(card)"
+        >
           <div class="card-top">
             <div class="path-icon" :class="card.color">
               <component :is="card.icon" :size="21" />
@@ -398,23 +459,104 @@ function logout() {
         </article>
       </section>
 
+      <section class="lesson-section">
+        <article class="panel lesson-list-panel">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">{{ activeModule.kicker }}</span>
+              <h2>{{ activeModule.title }}</h2>
+            </div>
+            <button type="button" @click="setActiveMenu('path')">全部章节</button>
+          </div>
+
+          <div class="lesson-list">
+            <button
+              v-for="lesson in moduleLessons"
+              :key="lesson.id"
+              type="button"
+              class="lesson-row"
+              :class="{ active: selectedLesson.id === lesson.id }"
+              @click="selectLesson(lesson)"
+            >
+              <span><Play :size="13" /></span>
+              <strong>{{ lesson.title }}</strong>
+              <small>{{ lesson.difficulty }} · {{ lesson.duration }}</small>
+            </button>
+          </div>
+        </article>
+
+        <article class="panel lesson-detail-panel">
+          <div class="lesson-title-row">
+            <div>
+              <span class="panel-kicker">当前教程</span>
+              <h2>{{ selectedLesson.title }}</h2>
+              <p>{{ selectedLesson.summary }}</p>
+            </div>
+            <button type="button" @click="copyText(selectedLesson.prompt, '本节提示词')">
+              <Copy :size="14" />
+              复制
+            </button>
+          </div>
+
+          <div class="outcome-card">
+            <strong>本节做完得到什么</strong>
+            <span>{{ selectedLesson.outcome }}</span>
+          </div>
+
+          <ol class="step-list">
+            <li v-for="step in selectedLesson.steps" :key="step">{{ step }}</li>
+          </ol>
+
+          <div class="prompt-box">
+            <div>
+              <span>可复制提示词</span>
+              <button type="button" @click="copyText(selectedLesson.prompt, '本节提示词')">
+                <Copy :size="13" />
+                复制文本
+              </button>
+            </div>
+            <pre>{{ selectedLesson.prompt }}</pre>
+          </div>
+
+          <div class="lesson-meta-grid">
+            <div>
+              <strong>容易卡住的地方</strong>
+              <p v-for="item in selectedLesson.commonMistakes" :key="item">{{ item }}</p>
+            </div>
+            <div>
+              <strong>参考来源</strong>
+              <a
+                v-for="source in selectedLesson.sources"
+                :key="source.url"
+                :href="source.url"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {{ source.title }}
+                <ExternalLink :size="12" />
+              </a>
+            </div>
+          </div>
+        </article>
+      </section>
+
       <section class="content-grid">
         <article class="panel suggestions-panel">
           <div class="panel-head">
             <div>
-              <span class="panel-kicker">下一步建议</span>
-              <h2>轻量提示，继续往前做</h2>
+              <span class="panel-kicker">上线节奏</span>
+              <h2>先卖起来，再迁后台</h2>
             </div>
-            <button type="button">查看全部</button>
+            <button type="button" @click="showToast('这部分后续可搬到云端资料表')">执行清单</button>
           </div>
 
           <div class="suggestion-list">
-            <div v-for="item in suggestions" :key="item.text" class="suggestion-item">
-              <span class="check" :class="{ muted: item.state === '稍后看' }">
+            <div v-for="item in launchRoadmap" :key="item.title" class="suggestion-item">
+              <span class="check">
                 <Check :size="13" />
               </span>
-              <p>{{ item.text }}</p>
-              <em>{{ item.state }}</em>
+              <p>{{ item.title }}</p>
+              <em>{{ item.phase }}</em>
             </div>
           </div>
         </article>
@@ -423,20 +565,28 @@ function logout() {
           <div class="panel-head">
             <div>
               <span class="panel-kicker">推荐资源</span>
-              <h2>下载占位资料</h2>
+              <h2>可信资料入口</h2>
             </div>
             <button type="button" @click="activeMenu = 'resources'">资源库</button>
           </div>
 
           <div class="resource-list">
-            <div v-for="item in resources" :key="item.name" class="resource-item">
-              <span class="file-badge" :class="item.tone">{{ item.type }}</span>
-              <p>{{ item.name }}</p>
-              <small>{{ item.size }}</small>
-              <button type="button" :aria-label="`下载${item.name}`" @click="downloadResource(item.name)">
+            <a
+              v-for="item in resourcePreview"
+              :key="item.title"
+              class="resource-item"
+              :href="item.url"
+              target="_blank"
+              rel="noreferrer"
+              @click="downloadResource(item.title)"
+            >
+              <span class="file-badge" :class="resourceTone(item.type)">{{ item.type }}</span>
+              <p>{{ item.title }}</p>
+              <small>{{ item.publisher }}</small>
+              <span class="resource-action" :aria-label="`打开${item.title}`">
                 <Download :size="15" />
-              </button>
-            </div>
+              </span>
+            </a>
           </div>
         </article>
       </section>
@@ -448,15 +598,21 @@ function logout() {
               <span class="panel-kicker">工具模板</span>
               <h2>随手复制的工作片段</h2>
             </div>
-            <button type="button" @click="copyPrompt">
+            <button type="button" @click="copyText(templatePreview[0].copyText, '模板')">
               <Copy :size="14" />
               复制
             </button>
           </div>
 
           <div class="prompt-list">
-            <button v-for="prompt in promptCards" :key="prompt" type="button" @click="copyPrompt">
-              {{ prompt }}
+            <button
+              v-for="template in templatePreview"
+              :key="template.id"
+              type="button"
+              @click="copyText(template.copyText, '模板')"
+            >
+              <strong>{{ template.title }}</strong>
+              <span>{{ template.summary }}</span>
             </button>
           </div>
         </article>
@@ -464,19 +620,24 @@ function logout() {
         <article class="panel recent-panel">
           <div class="panel-head">
             <div>
-              <span class="panel-kicker">最近打开</span>
-              <h2>回到上次位置</h2>
+              <span class="panel-kicker">内容路线</span>
+              <h2>从入门到交付</h2>
             </div>
           </div>
 
           <div class="timeline">
-            <div v-for="item in recentItems" :key="item.title" class="timeline-item">
-              <span><component :is="item.icon" :size="15" /></span>
+            <div v-for="module in learningModules" :key="module.id" class="timeline-item">
+              <span><BookOpen :size="15" /></span>
               <div>
-                <strong>{{ item.title }}</strong>
-                <small>{{ item.meta }}</small>
+                <strong>{{ module.title }}</strong>
+                <small>{{ module.duration }}</small>
               </div>
             </div>
+          </div>
+
+          <div v-if="nextLesson" class="next-card">
+            <FileText :size="16" />
+            <span>下一节：{{ nextLesson.title }}</span>
           </div>
         </article>
       </section>
