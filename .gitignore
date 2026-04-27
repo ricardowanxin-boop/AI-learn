@@ -1,0 +1,19 @@
+.DS_Store
+*.log
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Frontend dependencies and build output
+agent-studio/node_modules/
+agent-studio/dist/
+
+# Cloud function dependencies
+cloud-functions/**/node_modules/
+cloud-functions/**/package-lock.json
+
+# Editor and OS metadata
+.idea/
+.vscode/
