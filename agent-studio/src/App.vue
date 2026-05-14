@@ -26,12 +26,14 @@ import {
   launchRoadmap,
   learningModules,
   lessons,
+  purchaseInfo,
   projectCases,
   promptTemplates,
   resourceLinks,
   saleHighlights,
   siteConfig,
   toolCategories,
+  updateNotes,
 } from './data/content'
 
 const activeMenu = ref('path')
@@ -42,6 +44,7 @@ const authToken = ref(window.localStorage.getItem('agent-studio-token') || '')
 const isLoggingIn = ref(false)
 const selectedModuleId = ref(learningModules[0]?.id || '')
 const selectedLessonId = ref(lessons[0]?.id || '')
+const searchTerm = ref('')
 
 const navItems = [
   { id: 'home', label: '首页', icon: Home },
@@ -188,6 +191,48 @@ const templatePreview = computed(() => promptTemplates.slice(0, 3))
 const heroHighlights = computed(() => saleHighlights.slice(0, 3))
 const featuredDelivery = computed(() => deliveryItems.slice(0, 4))
 const featuredQuestions = computed(() => buyerQuestions.slice(0, 3))
+const searchIndex = computed(() => [
+  ...lessons.map((item) => ({
+    id: item.id,
+    title: item.title,
+    desc: item.summary,
+    type: '教程',
+    payload: item,
+    text: [item.title, item.summary, item.outcome, ...item.steps].join(' '),
+  })),
+  ...promptTemplates.map((item) => ({
+    id: item.id,
+    title: item.title,
+    desc: item.summary,
+    type: '模板',
+    payload: item,
+    text: [item.title, item.summary, item.useFor, item.copyText].join(' '),
+  })),
+  ...projectCases.map((item) => ({
+    id: item.id,
+    title: item.title,
+    desc: item.summary,
+    type: '案例',
+    payload: item,
+    text: [item.title, item.summary, ...item.steps, ...item.materials].join(' '),
+  })),
+  ...resourceLinks.map((item) => ({
+    id: item.id,
+    title: item.title,
+    desc: item.description,
+    type: '资料',
+    payload: item,
+    text: [item.title, item.description, item.type, item.publisher].join(' '),
+  })),
+])
+const searchResults = computed(() => {
+  const query = searchTerm.value.trim().toLowerCase()
+  if (!query) return []
+
+  return searchIndex.value
+    .filter((item) => item.text.toLowerCase().includes(query))
+    .slice(0, 8)
+})
 
 function showToast(message) {
   toast.value = message
@@ -240,7 +285,41 @@ function handleCardClick(card) {
     return
   }
 
+  if (card.type === 'resource') {
+    const resource = resourceLinks.find((item) => item.id === card.id)
+    if (resource?.url) {
+      window.open(resource.url, '_blank', 'noopener,noreferrer')
+      return
+    }
+  }
+
   showToast(`已打开：${card.title}`)
+}
+
+function openSearchResult(result) {
+  searchTerm.value = ''
+
+  if (result.type === '教程') {
+    selectLesson(result.payload)
+    return
+  }
+
+  if (result.type === '模板') {
+    activeMenu.value = 'templates'
+    showToast(`已定位模板：${result.title}`)
+    return
+  }
+
+  if (result.type === '案例') {
+    activeMenu.value = 'projects'
+    showToast(`已定位案例：${result.title}`)
+    return
+  }
+
+  if (result.type === '资料') {
+    activeMenu.value = 'resources'
+    window.open(result.payload.url, '_blank', 'noopener,noreferrer')
+  }
 }
 
 function downloadResource(name) {
@@ -401,8 +480,13 @@ function logout() {
       <header class="topbar">
         <label class="search">
           <Search :size="16" />
-          <input :placeholder="siteConfig.searchPlaceholder" />
-          <kbd>搜索</kbd>
+          <input
+            v-model="searchTerm"
+            :placeholder="siteConfig.searchPlaceholder"
+            @keydown.esc="searchTerm = ''"
+          />
+          <button v-if="searchTerm" type="button" @click="searchTerm = ''">清空</button>
+          <kbd v-else>搜索</kbd>
         </label>
 
         <div class="top-actions">
@@ -416,6 +500,29 @@ function logout() {
           </button>
         </div>
       </header>
+
+      <section v-if="searchTerm" class="search-results-panel">
+        <div class="panel-head">
+          <div>
+            <span class="panel-kicker">搜索结果</span>
+            <h2>{{ searchResults.length ? `找到 ${searchResults.length} 条内容` : '没有找到匹配内容' }}</h2>
+          </div>
+        </div>
+
+        <div v-if="searchResults.length" class="search-result-list">
+          <button
+            v-for="item in searchResults"
+            :key="`${item.type}-${item.id}`"
+            type="button"
+            @click="openSearchResult(item)"
+          >
+            <span>{{ item.type }}</span>
+            <strong>{{ item.title }}</strong>
+            <small>{{ item.desc }}</small>
+          </button>
+        </div>
+        <p v-else>换一个更简单的词试试，比如“工具”“购买”“教程”“资料”。</p>
+      </section>
 
       <section class="hero-panel">
         <div class="hero-copy">
@@ -481,6 +588,25 @@ function logout() {
           </div>
         </article>
 
+        <article class="panel purchase-panel">
+          <div class="purchase-head">
+            <span>{{ purchaseInfo.badge }}</span>
+            <strong>{{ purchaseInfo.price }}</strong>
+          </div>
+          <h2>{{ purchaseInfo.title }}</h2>
+          <p>{{ purchaseInfo.summary }}</p>
+          <div class="purchase-tags">
+            <span v-for="item in purchaseInfo.includes" :key="item">{{ item }}</span>
+          </div>
+          <ol>
+            <li v-for="step in purchaseInfo.steps" :key="step">{{ step }}</li>
+          </ol>
+          <button type="button" @click="showToast('首版先人工发卡，后续接自动发卡')">查看购买说明</button>
+          <small>{{ purchaseInfo.note }}</small>
+        </article>
+      </section>
+
+      <section v-if="activeMenu === 'home'" class="active-detail-section">
         <article class="panel faq-panel">
           <div class="panel-head">
             <div>
@@ -493,6 +619,23 @@ function logout() {
             <div v-for="item in featuredQuestions" :key="item.question" class="faq-item">
               <strong>{{ item.question }}</strong>
               <p>{{ item.answer }}</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel update-panel">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">更新记录</span>
+              <h2>让买家知道内容在继续变好</h2>
+            </div>
+          </div>
+
+          <div class="update-list">
+            <div v-for="item in updateNotes" :key="item.title" class="update-item">
+              <span>{{ item.date }}</span>
+              <strong>{{ item.title }}</strong>
+              <p>{{ item.items.join('、') }}</p>
             </div>
           </div>
         </article>
