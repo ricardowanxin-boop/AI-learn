@@ -703,6 +703,19 @@ kbd {
   margin-bottom: 14px;
 }
 
+.active-detail-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.7fr);
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.resources-detail,
+.template-detail,
+.project-detail {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .panel {
   min-width: 0;
   padding: 16px;
@@ -741,6 +754,210 @@ kbd {
   background: #fff;
   font-size: 11px;
   font-weight: 800;
+}
+
+.delivery-grid,
+.faq-list,
+.tool-category-grid,
+.directory-list {
+  display: grid;
+  gap: 10px;
+}
+
+.delivery-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.delivery-card,
+.faq-item,
+.tool-category-card {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #edf1ec;
+  border-radius: 10px;
+  background: #fbfcfa;
+}
+
+.delivery-card strong,
+.faq-item strong,
+.tool-category-card strong,
+.directory-list strong,
+.project-case-card h2,
+.template-card h2 {
+  color: var(--ink);
+}
+
+.delivery-card strong,
+.faq-item strong,
+.tool-category-card strong {
+  font-size: 13px;
+}
+
+.delivery-card span,
+.faq-item p,
+.tool-category-card p,
+.tool-category-card span,
+.directory-list small,
+.project-case-card p,
+.template-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.tool-category-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.tool-category-card span {
+  padding-top: 6px;
+  border-top: 1px solid #eef2ed;
+  color: var(--green-dark);
+  font-weight: 750;
+}
+
+.directory-list a {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: center;
+  min-height: 52px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef2ed;
+  text-decoration: none;
+}
+
+.directory-list a:last-child {
+  border-bottom: 0;
+}
+
+.directory-list span {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 34px;
+  height: 24px;
+  border-radius: 6px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.directory-list strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-case-card,
+.template-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.case-head {
+  display: grid;
+  gap: 7px;
+}
+
+.project-case-card h2,
+.template-card h2 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.project-case-card ol {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: caseStep;
+}
+
+.project-case-card li {
+  position: relative;
+  padding-left: 27px;
+  color: #425047;
+  font-size: 12px;
+  line-height: 1.5;
+  counter-increment: caseStep;
+}
+
+.project-case-card li::before {
+  content: counter(caseStep);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--green);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.project-case-card footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #eef2ed;
+}
+
+.project-case-card footer span {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.template-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.template-card-head button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  border: 1px solid rgba(18, 184, 111, 0.2);
+  border-radius: 7px;
+  color: var(--green-dark);
+  background: var(--green-soft);
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.template-card pre {
+  margin: 0;
+  padding: 11px;
+  border: 1px solid #edf1ec;
+  border-radius: 9px;
+  color: #435047;
+  background: #fbfcfa;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.65;
+  white-space: pre-wrap;
 }
 
 .suggestion-list,
@@ -1229,6 +1446,10 @@ kbd {
   }
 
   .hero-panel,
+  .active-detail-section,
+  .resources-detail,
+  .template-detail,
+  .project-detail,
   .lesson-section,
   .content-grid,
   .bottom-grid {
@@ -1332,6 +1553,11 @@ kbd {
 
   .resource-item {
     grid-template-columns: 40px minmax(0, 1fr) 28px;
+  }
+
+  .delivery-grid,
+  .tool-category-grid {
+    grid-template-columns: 1fr;
   }
 
   .resource-item small {

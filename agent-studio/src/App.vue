@@ -21,6 +21,8 @@ import {
   User,
 } from 'lucide-vue-next'
 import {
+  buyerQuestions,
+  deliveryItems,
   launchRoadmap,
   learningModules,
   lessons,
@@ -29,6 +31,7 @@ import {
   resourceLinks,
   saleHighlights,
   siteConfig,
+  toolCategories,
 } from './data/content'
 
 const activeMenu = ref('path')
@@ -183,6 +186,8 @@ const mainCards = computed(() => {
 const resourcePreview = computed(() => resourceLinks.slice(0, 4))
 const templatePreview = computed(() => promptTemplates.slice(0, 3))
 const heroHighlights = computed(() => saleHighlights.slice(0, 3))
+const featuredDelivery = computed(() => deliveryItems.slice(0, 4))
+const featuredQuestions = computed(() => buyerQuestions.slice(0, 3))
 
 function showToast(message) {
   toast.value = message
@@ -456,6 +461,113 @@ function logout() {
             <span>{{ card.state }}</span>
             <span><Clock3 :size="13" />{{ card.meta }}</span>
           </footer>
+        </article>
+      </section>
+
+      <section v-if="activeMenu === 'home'" class="active-detail-section">
+        <article class="panel package-panel">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">交付内容</span>
+              <h2>买家打开后能看到这些</h2>
+            </div>
+          </div>
+
+          <div class="delivery-grid">
+            <div v-for="item in featuredDelivery" :key="item.title" class="delivery-card">
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.summary }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel faq-panel">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">售前问答</span>
+              <h2>先把买家会问的讲清楚</h2>
+            </div>
+          </div>
+
+          <div class="faq-list">
+            <div v-for="item in featuredQuestions" :key="item.question" class="faq-item">
+              <strong>{{ item.question }}</strong>
+              <p>{{ item.answer }}</p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section v-if="activeMenu === 'resources'" class="active-detail-section resources-detail">
+        <article class="panel tool-map-panel">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">工具地图</span>
+              <h2>按任务找工具，不按热闹找工具</h2>
+            </div>
+          </div>
+
+          <div class="tool-category-grid">
+            <div v-for="item in toolCategories" :key="item.title" class="tool-category-card">
+              <strong>{{ item.title }}</strong>
+              <p>{{ item.summary }}</p>
+              <span>{{ item.firstStep }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel resource-directory-panel">
+          <div class="panel-head">
+            <div>
+              <span class="panel-kicker">全部入口</span>
+              <h2>后续可换成自己的资料库</h2>
+            </div>
+          </div>
+
+          <div class="directory-list">
+            <a
+              v-for="item in resourceLinks"
+              :key="item.id"
+              :href="item.url"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <span>{{ item.type }}</span>
+              <strong>{{ item.title }}</strong>
+              <small>{{ item.publisher }}</small>
+            </a>
+          </div>
+        </article>
+      </section>
+
+      <section v-if="activeMenu === 'projects'" class="active-detail-section project-detail">
+        <article v-for="item in projectCases" :key="item.id" class="panel project-case-card">
+          <div class="case-head">
+            <span class="panel-kicker">{{ item.deliverable }}</span>
+            <h2>{{ item.title }}</h2>
+            <p>{{ item.summary }}</p>
+          </div>
+          <ol>
+            <li v-for="step in item.steps" :key="step">{{ step }}</li>
+          </ol>
+          <footer>
+            <span v-for="material in item.materials" :key="material">{{ material }}</span>
+          </footer>
+        </article>
+      </section>
+
+      <section v-if="activeMenu === 'templates'" class="active-detail-section template-detail">
+        <article v-for="template in promptTemplates" :key="template.id" class="panel template-card">
+          <div class="template-card-head">
+            <span class="panel-kicker">{{ template.category }}</span>
+            <button type="button" @click="copyText(template.copyText, '模板')">
+              <Copy :size="13" />
+              复制
+            </button>
+          </div>
+          <h2>{{ template.title }}</h2>
+          <p>{{ template.summary }}</p>
+          <pre>{{ template.copyText }}</pre>
         </article>
       </section>
 
